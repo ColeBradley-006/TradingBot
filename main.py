@@ -36,10 +36,14 @@ def fiftyDayHigh(data):
     return highValues
 
 def fiftyDayLow(data):
+    """
+    This finds the low value in the past fifty days
+    """
     lowValues = []
     for array in data:
         lowValues.append(min(array[:50]))
     return lowValues
+
 def tenPrevFiftyDayAverages(data):
     """
     Calculates the last 10 10 day averages, so we can see if they are trending down or up
@@ -60,30 +64,40 @@ def tenPrevFiftyDayAverages(data):
                     stockTenDayAverages.append(sum/10)
                     break
         prevTenDayAverages.append(stockTenDayAverages)
-
     return prevTenDayAverages
 
-
-def addToBuyList(symbol):
+def addToBuyList(high, low, ten, twoHundred):
     """
-    This function determines if the
+    This function will write to the buy list
+    """
+    above = True
+    f = open(r"C:\Users\coleb\Desktop\Personal Projects\TradingBot\package\BuyList.txt", "w")
+    if above == True:
+        f.write("The 50 day SMA for " + "stockname" + " has moved above the 200 day SMA, " + "stock name" +" is now a recommended buy.\n")
+        f.write("The data for " + "stock name" + " is as follows: \n")
+        df = yf.download("aapl", start="2020-11-03", end="2022-01-17")
+        #np.savetxt(r"C:\Users\coleb\Desktop\Personal Projects\TradingBot\package\BuyList.txt", df.values, fmt="%d")
+        #The above line is how dataframes can be written to text files in python
+        #Write data about the stock to the file
+    f.close()
+
+def addToSellList(high, low, ten, twoHundred):
+    """
+    This function will write to sell list
+    """
+    return
+
+def addToWatchlist(high, low, ten, twoHundred):
+    """
+    This function will write to a watchlist
+    """
+    return
+def calculateCross(high, low, ten, twoHundred, direction):
+    """
+    This function will use the inputted direction based on if 10 day SMA is above or below 200 day SMA to determine
+    if a cross has happened.
     """
 
-    return
-
-def addToSellList(symbol):
-    return
-
-
-def buyListReturn():
-    return
-
-
-def sellListReturn():
-    return
-
-
-def watchlistReturn():
     return
 
 def fetchData(tickerList):
@@ -110,7 +124,6 @@ def fetchData(tickerList):
                 dataSet.append(dataPoints)
                 twoHundredDayAverages.append(sum / 200)
                 break
-
         if test == 5:
             break
 
@@ -129,11 +142,21 @@ def analyzeStocks():
     stockList = stockList.split("\n")
     stockList = stockList[1:-1]
     tickerList = createSymbolsList(stockList)
+    f.close()
     high, low, tenDay, twoHundredDay = fetchData(tickerList)
 
+    addToBuyList(low, tenDay, twoHundredDay)
+    addToSellList(high, tenDay, twoHundredDay)
+    addToWatchlist(high, low, tenDay, twoHundredDay)
+
+    """
+    Might add some plotting capability, tbd
+    """
     #data['Adj Close'].plot()
     #plt.show()
 
-
+"""
+Runs Program
+"""
 analyzeStocks()
 
