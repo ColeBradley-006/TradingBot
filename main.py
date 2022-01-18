@@ -1,6 +1,9 @@
+import timeit
+
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib as mp
+import matplotlib.pyplot as plt
 import yfinance as yf
 
 """
@@ -12,44 +15,61 @@ This is for all of the 100 largest market caps stocks on the NYSE and personally
 These lists are based off of the golden cross, the death cross, and whether assets are approaching these two events
 """
 
-def zero_division(a, b):
+def createSymbolsList(inputData):
     """
-    This makes sure the program doesn't crash by attempting to divide by 0
+    This Function will create a dictionary of tickers from the stockList provided
+    A dictionary was selected for easy access to different variables
     """
-    return a / b if b != 0 else 0
-
-
-
-
-def createSymbolsList(inputData, outputData):
-    """
-    This Function will create a list of tickers from stockList provided
-    """
+    outputData = []
     for line in inputData:
-        title = str(line).upper()
-        ticker = yf.Ticker(title)
-        exec(title + " = ticker")
-        outputData.append(title)
+        yf.Ticker(line)
+        outputData.append(line)
     return outputData
 
-def fiftyDayHigh(symbol):
+def fiftyDayHigh(data):
     """
-    Finds the highest close in the past fifty days for stocks in list
+    Finds the highest close in the past two hundred days for stocks in list
     """
-    return
+    highValues = []
+    for array in data:
+        highValues.append(max(array[:50]))
+    return highValues
 
+def fiftyDayLow(data):
+    lowValues = []
+    for array in data:
+        lowValues.append(min(array[:50]))
+    return lowValues
+def tenPrevFiftyDayAverages(data):
+    """
+    Calculates the last 10 10 day averages, so we can see if they are trending down or up
+    This data will be helpful to determine watchlist stocks; are they getting closer to breaking above or below the
+    200 day SMA
+    """
+    prevTenDayAverages = []
+    for stock in data:
+        stockTenDayAverages = []
+        for i in range(10):
+            count = 0
+            sum = 0
+            for point in reversed(stock):
+                count += 1
+                sum += point
+                if count == 10:
+                    stock.pop()
+                    stockTenDayAverages.append(sum/10)
+                    break
+        prevTenDayAverages.append(stockTenDayAverages)
 
-def twoHundredDayAverage(symbol):
-    return
-
-
-def tenPrevFiftyDayAverages(symbol):
-    return
+    return prevTenDayAverages
 
 
 def addToBuyList(symbol):
-    return
+    """
+    This function determines if the
+    """
 
+    return
 
 def addToSellList(symbol):
     return
@@ -66,6 +86,39 @@ def sellListReturn():
 def watchlistReturn():
     return
 
+def fetchData(tickerList):
+    """
+    This function is built so we don't have to iterate through the data multiple times for each security.
+    Gets data from the past 200 days
+    """
+    dataSet =[]
+    test = 0
+    twoHundredDayAverages = []
+    for company in tickerList:
+        test += 1
+        dataPoints =[]
+        sum = 0
+        count = 0
+        data = yf.download(company, start="2020-11-03", end="2022-01-17")
+        closeData = data["Close"]
+        for point in reversed(closeData):
+            dataPoint = float(point)
+            dataPoints.append(dataPoint)
+            sum += dataPoint
+            count += 1
+            if count == 200:
+                dataSet.append(dataPoints)
+                twoHundredDayAverages.append(sum / 200)
+                break
+
+        if test == 5:
+            break
+
+    listOfHighs =fiftyDayHigh(dataSet)
+    listOfLows = fiftyDayLow(dataSet)
+    listOfAverages = tenPrevFiftyDayAverages(dataSet)
+
+    return listOfHighs, listOfLows, listOfAverages, twoHundredDayAverages
 
 def analyzeStocks():
     """
@@ -75,8 +128,11 @@ def analyzeStocks():
     stockList = f.read()
     stockList = stockList.split("\n")
     stockList = stockList[1:-1]
-    symbolList = []
-    tickerList = createSymbolsList(stockList, symbolList)
+    tickerList = createSymbolsList(stockList)
+    high, low, tenDay, twoHundredDay = fetchData(tickerList)
+
+    #data['Adj Close'].plot()
+    #plt.show()
 
 
 analyzeStocks()
