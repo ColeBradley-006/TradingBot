@@ -175,12 +175,13 @@ def analyzeStocks():
     for each in fiftyDayMulti:
         fiftyDay.append(each[0])
     series = {"High": high, "Low": low, "FiftySMA": fiftyDay, "TwoHundredSMA": twoHundredDay}
-    summary = pd.DataFrame(data=series, index=stockList[:]) # This will be used to return data on each of the
+    summary = pd.DataFrame(data=series, index=stockList[:]) # This will be used to return data on each of the stocks
     status = []
 
     for i in range(len(stockList)):
         status.append(calculateCross(fiftyDayMulti[i], twoHundredDay[i]))
 
+    # Creates all the files
     currentDate = str(datetime.date(datetime.now()))
     b = open(currentDate + "BuyList.txt", "w+")
     s = open(currentDate + "SellList.txt", "w+")
