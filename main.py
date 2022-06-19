@@ -50,33 +50,57 @@ def tenPrevFiftyDayAverages(data):
         prevFiftyDayAverages.append(stockFiftyDayAverages)
     return prevFiftyDayAverages
 
-def addToBuyList(high, low, ten, twoHundred):
+def addToBuyList(file, current, symbol, data):
     """
-    This function will write to the buy list
+    This function will write to the buy list, stocks where the 50 day SMA passes above the 200 day SMA
     """
-    above = True
-    f = open(r"C:\Users\coleb\Desktop\Personal Projects\TradingBot\package\BuyList.txt", "w")
-    if above:
-        f.write("The 50 day SMA for " + "stockname" + " has moved above the 200 day SMA, " + "stock name" + " is now a recommended buy.\n")
-        f.write("The data for " + "stock name" + " is as follows: \n")
-        df = yf.download("aapl", start="2020-11-03", end="2022-01-17")
-        np.savetxt(r"C:\Users\coleb\Desktop\Personal Projects\TradingBot\package\BuyList.txt", df.values, fmt="%d")
-        # The above line is how dataframes can be written to text files in python
-        # Write data about the stock to the file
-    f.close()
-    return
 
-def addToSellList(high, low, ten, twoHundred):
-    """
-    This function will write to sell list
-    """
-    return
+    file.write("The 50 day SMA for " + symbol + " has moved above the 200 day SMA, " + symbol + " is now a recommended buy.\n")
+    file.write("The data for " + symbol + " is as follows: \n")
+    file.write("Current: \t High: \t Low: \t 50 Day SMA: \t 200 Day SMA:\n")
+    file.write(str(current) + "\t" + str(data.High[symbol]) + "\t" + str(data.Low[symbol]) + "\t" + str(
+        data.FiftySMA[symbol]) + "\t" + str(data.TwoHundredSMA[symbol]) + "\n\n")
 
-def addToWatchlist(high, low, ten, twoHundred):
+def addToSellList(file, current, symbol, data):
     """
-    This function will write to a watchlist
+    This function will write to sell list, stocks where the 50 day SMA passes below the 200 day SMA
     """
-    return
+    file.write("The 50 day SMA for " + symbol + " has moved below the 200 day SMA, " + symbol + " is now a recommended sell.\n")
+    file.write("The data for " + symbol + " is as follows: \n")
+    file.write("Current: \t High: \t Low: \t 50 Day SMA: \t 200 Day SMA:\n")
+    file.write(str(current) + "\t" + str(data.High[symbol]) + "\t" + str(data.Low[symbol]) + "\t" + str(
+        data.FiftySMA[symbol]) + "\t" + str(data.TwoHundredSMA[symbol]) + "\n\n")
+
+def addToWatchlist(file, current, symbol, data):
+    """
+    This function will write to a watchlist where the 50 day SMA is fluctuating above and below the 200 day SMA
+    """
+    file.write("The 50 day SMA for " + symbol + " has moved above and below the 200 day SMA, " + symbol + " is now recommended to observe.\n")
+    file.write("The data for " + symbol + " is as follows: \n")
+    file.write("Current: \t High: \t Low: \t 50 Day SMA: \t 200 Day SMA:\n")
+    file.write(str(current) + "\t" + str(data.High[symbol]) + "\t" + str(data.Low[symbol]) + "\t" + str(
+        data.FiftySMA[symbol]) + "\t" + str(data.TwoHundredSMA[symbol]) + "\n\n")
+
+
+def addToHigherList(file, current, symbol, data):
+    """
+    This function will write to a list of stocks where the 50 day SMA is above the 200 day SMA
+    """
+    file.write("The 50 day SMA for " + symbol + " is above the 200 day SMA, " + symbol + " is potentially a sell.\n")
+    file.write("The data for " + symbol + " is as follows: \n")
+    file.write("Current: \t High: \t Low: \t 50 Day SMA: \t 200 Day SMA:\n")
+    file.write(str(current) + "\t" + str(data.High[symbol]) + "\t" + str(data.Low[symbol]) + "\t" + str(data.FiftySMA[symbol]) + "\t" + str(data.TwoHundredSMA[symbol]) + "\n\n")
+
+
+def addToLowerList(file, current, symbol, data):
+    """
+    This function will write to a list of stocks where the 50 day SMA is below the 200 day SMA
+    """
+    file.write("The 50 day SMA for " + symbol + " is below the 200 day SMA, " + symbol + " this is a potential buy.\n")
+    file.write("The data for " + symbol + " is as follows: \n")
+    file.write("Current: \t High: \t Low: \t 50 Day SMA: \t 200 Day SMA:\n")
+    file.write(str(current) + "\t" + str(data.High[symbol]) + "\t" + str(data.Low[symbol]) + "\t" + str(data.FiftySMA[symbol]) + "\t" + str(data.TwoHundredSMA[symbol]) + "\n\n")
+
 
 def calculateCross(ten, twoHundred):
     """
@@ -85,9 +109,9 @@ def calculateCross(ten, twoHundred):
     """
     upCross = False
     downCross = False
-    for i in range(1, 10):
+    for i in range(8,-1, -1):
         tenDay = ten[i]
-        prevTenDay = ten[i - 1]
+        prevTenDay = ten[i + 1]
         if (twoHundred - tenDay) * (twoHundred - prevTenDay) < 0 and tenDay > twoHundred:
             upCross = True
         elif (twoHundred - tenDay) * (twoHundred - prevTenDay) < 0 and tenDay < twoHundred:
@@ -99,6 +123,11 @@ def calculateCross(ten, twoHundred):
         return "buy"
     elif downCross:
         return "sell"
+    else:
+        if ten[0] < twoHundred:
+            return "lower"
+        else:
+            return "higher"
 
 def fetchData(tickerList):
     """
@@ -106,12 +135,10 @@ def fetchData(tickerList):
     Gets data from the past 200 days
     """
     dataSet = []
-    test = 0
     twoHundredDayAverages = []
     currentDate = str(datetime.date(datetime.now()))
     prevDate = currentDate[:3] + str(int(currentDate[3]) - 1) + currentDate[4:]
     for company in tickerList:
-        test += 1
         dataPoints = []
         sum = 0
         data = yf.download(company, start=prevDate, end=currentDate).tail(200)
@@ -124,19 +151,18 @@ def fetchData(tickerList):
         dataSet.append(dataPoints)
         twoHundredDayAverages.append(sum / 200)
 
-        if test == 5:
-            break
-
     listOfHighs = fiftyDayHigh(dataSet)
     listOfLows = fiftyDayLow(dataSet)
     listOfAverages = tenPrevFiftyDayAverages(dataSet)
-    # Currently Calculating the 10 50 day averages from 210 days ago FIX!!!!
+    current = []
+    for each in dataSet:
+        current.append(each[0])
 
-    return listOfHighs, listOfLows, listOfAverages, twoHundredDayAverages
+    return current, listOfHighs, listOfLows, listOfAverages, twoHundredDayAverages
 
 def analyzeStocks():
     """
-    Main Function
+    Main Function, After collecting the data, writes to the files
     """
     f = open(r"C:\Users\coleb\Desktop\Personal Projects\TradingBot\package\stockList.txt", "r", encoding="utf-16-le")
     stockList = f.read()
@@ -144,16 +170,50 @@ def analyzeStocks():
     stockList = stockList[1:-1]
     f.close()
 
-    high, low, fiftyDayMulti, twoHundredDay = fetchData(stockList)
+    current, high, low, fiftyDayMulti, twoHundredDay = fetchData(stockList)
     fiftyDay = []
     for each in fiftyDayMulti:
-        fiftyDay.append(each[9])
-    series = {"High": high, "Low": low, "10SMA": fiftyDay, "200SMA": twoHundredDay}
-    summary = pd.DataFrame(data=series, index=stockList[:5]) #This will be used to return data on each of the
-    addToBuyList(high, low, fiftyDay, twoHundredDay)
-    addToSellList(high, low, fiftyDay, twoHundredDay)
-    addToWatchlist(high, low, fiftyDay, twoHundredDay)
+        fiftyDay.append(each[0])
+    series = {"High": high, "Low": low, "FiftySMA": fiftyDay, "TwoHundredSMA": twoHundredDay}
+    summary = pd.DataFrame(data=series, index=stockList[:]) # This will be used to return data on each of the
+    status = []
 
+    for i in range(len(stockList)):
+        status.append(calculateCross(fiftyDayMulti[i], twoHundredDay[i]))
+
+    currentDate = str(datetime.date(datetime.now()))
+    b = open(currentDate + "BuyList.txt", "w+")
+    s = open(currentDate + "SellList.txt", "w+")
+    w = open(currentDate + "WatchList.txt", "w+")
+    h = open(currentDate + "HigherList.txt", "w+")
+    l = open(currentDate + "LowerList.txt", "w+")
+    b.write("Buy List for the Date: " + currentDate + "\n\n")
+    s.write("Sell List for the Date: " + currentDate + "\n\n")
+    w.write("Watch List for the Date: " + currentDate + "\n\n")
+    h.write("Higher List for the Date: " + currentDate + "\n\n")
+    l.write("Lower List for the Date: " + currentDate + "\n\n")
+    for i in range(len(status)):
+        symbol = stockList[i]
+        stockSummary = summary.head(1)
+        summary = summary.drop(summary.index[0])
+        currentValue = current[i]
+        position = status[i]
+        if position == "buy":
+            addToBuyList(b, currentValue, symbol, stockSummary)
+        elif position == "sell":
+            addToSellList(s, currentValue, symbol, stockSummary)
+        elif position == "both":
+            addToWatchlist(w, currentValue, symbol, stockSummary)
+        elif position == "lower":
+            addToLowerList(l, currentValue, symbol, stockSummary)
+        else:
+            addToHigherList(h, currentValue, symbol, stockSummary)
+
+    b.close()
+    s.close()
+    w.close()
+    h.close()
+    l.close()
     """
     Might add some plotting capability, tbd
     """
